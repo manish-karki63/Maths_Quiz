@@ -1,0 +1,4 @@
+<composable android:id="@+id/resultScreen"
+    android:name="com.example.ResultScreen"
+    android:label="Result Screen"
+    xmlns:android="http://schemas.android.com/apk/res/android" />
