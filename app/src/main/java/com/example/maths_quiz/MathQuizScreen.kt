@@ -1,6 +1,5 @@
 package com.example.maths_quiz
 
-
 import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,15 +18,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 
 data class MathQuestion(val question: String, val correctAnswer: String, val operation: Operation) {
     var userAnswer: String? = null
@@ -44,18 +42,7 @@ enum class Operation {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MathQuizScreen(navController: NavController? = null) {
-    val questions = remember {
-        listOf(
-            MathQuestion("2 + 3 = ?", "5", Operation.ADD),
-            MathQuestion("10 - 5 = ?", "5", Operation.SUBTRACT),
-            MathQuestion("2 * 4 = ?", "8", Operation.MULTIPLY),
-            MathQuestion("15 / 3 = 5?", "Correct", Operation.DIVIDE),
-            MathQuestion("7 * 3 = ?", "21", Operation.MULTIPLY)
-        )
-    }
-
-    var showResult by remember { mutableStateOf(false) }
+fun MathQuizScreen(onNavigateToResult: () -> Unit, questions: List<MathQuestion>) {
 
     Scaffold(
         topBar = {
@@ -77,8 +64,7 @@ fun MathQuizScreen(navController: NavController? = null) {
                     ) {
                         Text(question.question)
                         RadioGroup(
-                            options = listOf("Correct", "Incorrect"),
-                            selectedOption = question,
+                            selected = question.userAnswer ?: "",
                             onOptionSelected = { answer ->
                                 questions[index].userAnswer = answer
                             }
@@ -95,17 +81,9 @@ fun MathQuizScreen(navController: NavController? = null) {
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = {
-                    showResult = true
-                }
+                onClick = onNavigateToResult
             ) {
                 Text("Submit")
-            }
-            if (showResult) {
-                val correctCount = questions.count { it.isCorrect() }
-                val totalQuestions = questions.size
-                val percentage = (correctCount.toFloat() / totalQuestions.toFloat()) * 100
-                navController?.navigate("result/${String.format("%.2f", percentage)}")
             }
         }
     }
@@ -131,25 +109,33 @@ fun MathQuestion(question: String, onAnswerChanged: (String) -> Unit) {
 
 @Composable
 fun RadioGroup(
-    options: List<String>,
-    selectedOption: MathQuestion,
+    selected: String,
     onOptionSelected: (String) -> Unit
 ) {
+    val options = listOf("Correct", "Incorrect")
+    var selectedOption by remember { mutableStateOf(selected) }
     options.forEach { option ->
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(vertical = 8.dp)
         ) {
             RadioButton(
-                selected = (option == selectedOption.userAnswer),
+                selected = (option == selectedOption),
                 onClick = {
+                    selectedOption = option
                     onOptionSelected(option)
                 },
                 modifier = Modifier.clickable {
+                    selectedOption = option
                     onOptionSelected(option)
                 }
             )
-            Text(text = option, modifier = Modifier.padding(start = 8.dp))
+            Text(text = option, modifier = Modifier
+                .padding(start = 8.dp)
+                .clickable {
+                    selectedOption = option
+                    onOptionSelected(option)
+                })
         }
     }
 }
